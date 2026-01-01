@@ -18,14 +18,6 @@ namespace pokemon_discord_bot
         private static readonly object padlock = new object();
         public Dictionary<int, ApiPokemon> Pokemons { get; private set; }
 
-        public static void Init()
-        {
-            instance = new ApiPokemonData();
-            var path = Path.Combine(AppContext.BaseDirectory, FILENAME);
-            var json = File.ReadAllText(path);
-            instance.Pokemons = JsonSerializer.Deserialize<Dictionary<int, ApiPokemon>>(json)!;
-        }
-
         public static ApiPokemonData Instance
         {
             get
@@ -39,6 +31,19 @@ namespace pokemon_discord_bot
                     return instance;
                 }
             }
+        }
+
+        public static void Init()
+        {
+            instance = new ApiPokemonData();
+            var path = Path.Combine(AppContext.BaseDirectory, FILENAME);
+            var json = File.ReadAllText(path);
+            instance.Pokemons = JsonSerializer.Deserialize<Dictionary<int, ApiPokemon>>(json)!;
+        }
+
+        public ApiPokemon GetRandomPokemon()
+        {
+            return Pokemons.Values.ElementAt(new Random().Next(0, Pokemons.Count));
         }
     }
 
