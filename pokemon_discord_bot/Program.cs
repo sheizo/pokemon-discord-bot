@@ -1,13 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using System;
-using System.Threading.Tasks;
 
 namespace pokemon_discord_bot
 {
     public class Program
     {
-        private static DiscordSocketClient _client;
+        private static DiscordSocketClient? _client;
         public static async Task Main()
         {
             _client = new DiscordSocketClient();
@@ -15,7 +13,7 @@ namespace pokemon_discord_bot
             _client.MessageReceived += OnMessageReceived;
             _client.Ready += OnReady;
 
-            String token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN");
+            String? token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN");
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
 
@@ -33,9 +31,10 @@ namespace pokemon_discord_bot
             return Task.CompletedTask;
         }
 
-        private static async Task OnMessageReceived(SocketMessage msg)
+        private static Task OnMessageReceived(SocketMessage msg)
         {
-            if (msg.Author.IsBot) return;
+            if (msg.Author.IsBot) return Task.CompletedTask;
+            return Task.CompletedTask;
         }
     }
 }
