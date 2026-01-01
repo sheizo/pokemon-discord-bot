@@ -50,6 +50,17 @@ namespace pokemon_discord_bot
         private static async Task OnMessageReceived(SocketMessage msg)
         {
             if (msg.Author.IsBot) return;
+            if (msg.Content != "coninhas") return;
+
+            ApiPokemon randomPokemon = ApiPokemonData.Instance.GetRandomPokemon();
+            ApiPokemon randomPokemon2 = ApiPokemonData.Instance.GetRandomPokemon();
+            ApiPokemon randomPokemon3 = ApiPokemonData.Instance.GetRandomPokemon();
+            ApiPokemon randomPokemon4 = ApiPokemonData.Instance.GetRandomPokemon();
+            ApiPokemon randomPokemon5 = ApiPokemonData.Instance.GetRandomPokemon();
+
+            var bytes = await ImageEditor.CombineImagesAsync(new string[] { randomPokemon.Sprites.FrontShiny, randomPokemon2.Sprites.FrontShiny, randomPokemon3.Sprites.FrontShiny, randomPokemon4.Sprites.FrontDefault, randomPokemon5.Sprites.FrontDefault }, 2.0f);
+
+            await msg.Channel.SendFileAsync(new FileAttachment(new MemoryStream(bytes), "coninhas.jpg"));
         }
     }
 }
