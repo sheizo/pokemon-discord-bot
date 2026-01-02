@@ -9,7 +9,7 @@ BASE_URL = "https://pokeapi.co/api/v2"
 SPRITE_NAMES = ["front_default", "front_shiny", "front_female", "front_shiny_female"]
 CONCURRENT = 50
 path = Path().resolve().parent
-file_path = path / "all_pokemons.json"
+file_path = path/"pokemon_discord_bot"/"all_pokemons.json"
 
 async def fetch_pokemon(session: aiohttp.ClientSession, name_or_id: str) -> Dict[str, Any]:
     """Async fetch pokemon + species."""
