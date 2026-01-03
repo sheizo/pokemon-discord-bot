@@ -15,7 +15,7 @@ namespace pokemon_discord_bot
         [Command("drop")]
         public async Task DropAsync()
         {
-            ApiPokemon[] randomPokemons = ApiPokemonData.Instance.CreateRandomPokemon(3);
+            ApiPokemon[] randomPokemons = ApiPokemonData.Instance.GetRandomPokemon(3);
             string[] randomPokemonsSprites = randomPokemons.Select(x => x.Sprites.FrontDefault).ToArray();
 
             var bytes = await ImageEditor.CombineImagesAsync(randomPokemonsSprites, 2.0f);
