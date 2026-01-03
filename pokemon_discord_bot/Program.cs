@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using PokemonBot.Data;
@@ -31,6 +32,10 @@ namespace pokemon_discord_bot
             string? token = Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN");
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
+
+            CommandService services = new CommandService();
+            CommandHandler commands = new CommandHandler(_client, services);
+            await commands.InstallCommandsAsync();
 
             await Task.Delay(-1);
         }
