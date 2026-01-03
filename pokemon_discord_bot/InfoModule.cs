@@ -1,16 +1,19 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using PokemonBot.Data;
 
 namespace pokemon_discord_bot
 {
     public class InfoModule : ModuleBase<SocketCommandContext>
     {
         private readonly EncounterEventHandler _encounterEventHandler;
+        private readonly AppDbContext _db;
 
-        public InfoModule(EncounterEventHandler encounterEventHandler)
+        public InfoModule(EncounterEventHandler encounterEventHandler, AppDbContext db)
         {
             _encounterEventHandler = encounterEventHandler;
+            _db = db;
         }
 
         [Command("drop")]

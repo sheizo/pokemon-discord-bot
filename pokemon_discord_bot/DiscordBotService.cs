@@ -7,7 +7,6 @@ using PokemonBot.Data;
 
 namespace pokemon_discord_bot
 {
-
     public class DiscordBotService
     {
         private readonly IServiceProvider _provider;
@@ -44,7 +43,7 @@ namespace pokemon_discord_bot
             _client.Ready += OnReady;
 
             // Install commands and hook message handler
-            await _commandHandler.InstallCommandsAsync(_provider);
+            await _commandHandler.InstallCommandsAsync();
 
             // Login and start
             await _client.LoginAsync(TokenType.Bot, _token);

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace pokemon_discord_bot.Data
 {
+
     [Table("items")]
     public class Item
     {
@@ -20,5 +21,9 @@ namespace pokemon_discord_bot.Data
 
         [Column("tradeable")]
         public bool Tradeable { get; set; } = true;
+
+        [Column("attributes", TypeName = "jsonb")]
+        [Required]
+        public Dictionary<string, object> Attributes { get; set; } = new();
     }
 }

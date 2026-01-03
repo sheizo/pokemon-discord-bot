@@ -1,5 +1,6 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace pokemon_discord_bot
@@ -8,22 +9,23 @@ namespace pokemon_discord_bot
     {
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
-        private IServiceProvider _rootProvider;
+        private readonly IServiceProvider _provider;
 
         // Retrieve client and CommandService instance via ctor
-        public CommandHandler(DiscordSocketClient client, CommandService commands)
+        public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider provider)
         {
+            _provider = provider;
             _commands = commands;
             _client = client;
         }
 
-        public async Task InstallCommandsAsync(IServiceProvider rootProvider)
+        public async Task InstallCommandsAsync()
         {
-            _rootProvider = rootProvider;
-
             // Hook the MessageReceived event into our command handler
             _client.MessageReceived += HandleCommandAsync;
-            await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: _rootProvider);
+
+            using var scope = _provider.CreateScope();
+            await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: scope.ServiceProvider);
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)
@@ -41,15 +43,13 @@ namespace pokemon_discord_bot
                 message.Author.IsBot)
                 return;
 
-            // Create a WebSocket-based command context based on the message
-            var context = new SocketCommandContext(_client, message);
+            using var scope = _provider.CreateScope();
 
-            // Execute the command with the command context we just
-            // created, along with the service provider for precondition checks.
+            var context = new SocketCommandContext(_client, message);
             await _commands.ExecuteAsync(
                 context: context,
                 argPos: argPos,
-                services: _rootProvider);
+                services: scope.ServiceProvider);
         }
     }
 
