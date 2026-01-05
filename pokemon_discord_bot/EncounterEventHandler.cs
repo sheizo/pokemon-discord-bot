@@ -6,25 +6,21 @@ namespace pokemon_discord_bot
 {
     public class EncounterEventHandler
     {
-        private const uint DROP_COOLDOWN_SECONDS = 5;
+        private const uint DROP_COOLDOWN_SECONDS = 0;
         private const uint CLAIM_COOLDOWN_SECONDS = 5;
         private const double SHINY_CHANCE = 1d/10d;
         private const int MIN_POKEMON_SIZE = 1;
         private const int MAX_POKEMON_SIZE = 5;
 
-        private readonly IServiceScopeFactory _scopeFactory;
-
         private Dictionary<ulong, DateTimeOffset> _lastTriggerTime;
         private Dictionary<ulong, DateTimeOffset> _lastClaimTime;
 
-        public EncounterEventHandler(IServiceScopeFactory scopeFactory) {
-            _scopeFactory = scopeFactory;
-
+        public EncounterEventHandler() {
             _lastTriggerTime = new Dictionary<ulong, DateTimeOffset>();
             _lastClaimTime = new Dictionary<ulong, DateTimeOffset>();
         }
 
-        public async Task<EncounterEvent> CreateRandomEncounterEvent(int pokemonAmount, ulong userId)
+        public async Task<EncounterEvent> CreateRandomEncounterEvent(int pokemonAmount, ulong userId, AppDbContext db)
         {
             if (!CanUserTriggerEncounter(userId)) 
                 throw new Exception("Tried to create random encounter event when user is on cooldown. Should always call CanUserTriggerEncounter first");
@@ -34,8 +30,6 @@ namespace pokemon_discord_bot
             encounterEvent.TriggeredBy = (long) userId;
 
             //Below line needs an EncounterEvent in the DB present
-            using var scope = _scopeFactory.CreateScope();
-            AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             List<Pokemon> pokemons = await CreateRandomPokemons(pokemonAmount, encounterEvent, db);
             await db.SaveChangesAsync();
 

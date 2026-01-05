@@ -26,7 +26,7 @@ namespace pokemon_discord_bot
                 return;
             }
 
-            var encounter = await _encounterEventHandler.CreateRandomEncounterEvent(3, user.Id);
+            var encounter = await _encounterEventHandler.CreateRandomEncounterEvent(3, user.Id, _db);
             List<string> pokemonSprites = new List<string>();
 
             foreach(var pokemon in encounter.Pokemons)

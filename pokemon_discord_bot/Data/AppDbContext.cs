@@ -12,16 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<Item> Items => Set<Item>();
     public DbSet<PlayerInventory> PlayerInventory => Set<PlayerInventory>();
 
-    protected override void OnConfiguring(DbContextOptionsBuilder options)
-    {
-        var connectionUrl = Environment.GetEnvironmentVariable("POKEMON_DISCORD_BOT_DB_URL");
-        
-        //This allows Dictionary<string, object> to work for jsonb columns
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionUrl);
-        dataSourceBuilder.EnableDynamicJson();
 
-        options.UseNpgsql(dataSourceBuilder.Build());
-    }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
