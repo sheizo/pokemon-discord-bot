@@ -6,7 +6,7 @@ namespace pokemon_discord_bot
 {
     public class EncounterEventHandler
     {
-        private const uint DROP_COOLDOWN_SECONDS = 0;
+        private const uint DROP_COOLDOWN_SECONDS = 5;
         private const uint CLAIM_COOLDOWN_SECONDS = 5;
         private const double SHINY_CHANCE = 1d/10d;
         private const int MIN_POKEMON_SIZE = 1;
@@ -41,7 +41,7 @@ namespace pokemon_discord_bot
 
         private async Task<List<Pokemon>> CreateRandomPokemons(int pokemonAmount, EncounterEvent encounterEvent, AppDbContext db)
         {
-            ApiPokemon[] randomPokemons = ApiPokemonData.Instance.GetRandomPokemon(3);
+            List<ApiPokemon> randomPokemons = ApiPokemonData.GetRandomPokemon(3);
             List<Pokemon> pokemons = new List<Pokemon>();
 
             foreach (ApiPokemon apiPokemon in randomPokemons)
@@ -51,9 +51,9 @@ namespace pokemon_discord_bot
                 Pokemon pokemon = new Pokemon();
                 pokemon.ApiPokemonId = (int) apiPokemon.Id;
                 pokemon.EncounterEvent = encounterEvent;
-                pokemon.IsShiny = Math.Round(random.NextDouble(), 5) < SHINY_CHANCE;
+                pokemon.IsShiny = random.NextDouble() < SHINY_CHANCE;
                 var values = Enum.GetValues<PokemonGender>();
-                pokemon.Gender = (PokemonGender)values.GetValue(random.Next(values.Length)); //TODO: SHOULD BE RANDOMLY MALE/FEMALE/GENDERLESS (depending on whicih pokemon)
+                pokemon.Gender = ApiPokemonData.GetRandomPokemonGender(pokemon);
                 pokemon.PokemonStats = new PokemonStats()
                 {
                     IvAtk = (short)(random.NextInt64(0, 31) + 1),

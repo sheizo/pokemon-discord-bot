@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using pokemon_discord_bot.Data;
+using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace pokemon_discord_bot
@@ -9,6 +11,8 @@ namespace pokemon_discord_bot
         private static ApiPokemonData instance = null;
         private static readonly object padlock = new object();
         public Dictionary<int, ApiPokemon> Pokemons { get; private set; }
+
+        private static uint totalWeight = 0;
 
         public static ApiPokemonData Instance
         {
@@ -31,6 +35,9 @@ namespace pokemon_discord_bot
             var path = Path.Combine(AppContext.BaseDirectory, FILENAME);
             var json = File.ReadAllText(path);
             instance.Pokemons = JsonSerializer.Deserialize<Dictionary<int, ApiPokemon>>(json)!;
+
+            foreach (ApiPokemon pokemon in instance.Pokemons.Values) 
+                totalWeight += pokemon.Weight;
         }
 
         public ApiPokemon GetPokemon(int id)
@@ -39,16 +46,40 @@ namespace pokemon_discord_bot
             return Pokemons[id];
         }
 
-        public ApiPokemon[] GetRandomPokemon(uint quantity)
+        public static List<ApiPokemon> GetRandomPokemon(uint quantity)
         {
-            ApiPokemon[] pokemonList = new ApiPokemon[quantity];
+            List<ApiPokemon> randomPokemons = new List<ApiPokemon>();
 
-            for (int i = 0; i < pokemonList.Length; i++)
+            for (int i = 0; i < quantity; i++)
+                randomPokemons.Add(GetRandomPokemon());
+
+            return randomPokemons;
+        }
+
+        public static ApiPokemon GetRandomPokemon()
+        {
+            int random = new Random().Next(0, (int)totalWeight);
+            Console.WriteLine(random);
+            foreach (ApiPokemon pokemon in instance.Pokemons.Values)
             {
-                pokemonList[i] = Pokemons.Values.ElementAt(new Random().Next(0, Pokemons.Count));
+                random -= (int)pokemon.Weight;
+                if (random < 0) return pokemon;
             }
 
-            return pokemonList; 
+            return null!;
+        }
+
+        public static PokemonGender GetRandomPokemonGender(Pokemon pokemon) 
+        {
+            return GetRandomPokemonGender(pokemon.ApiPokemon);
+        }
+
+        public static PokemonGender GetRandomPokemonGender(ApiPokemon apiPokemon)
+        {
+            if (apiPokemon.GenderRate == -1) return PokemonGender.GENDERLESS;
+
+            double femaleChance = apiPokemon.GenderRate / 8d;
+            return new Random().NextDouble() > femaleChance ? PokemonGender.MALE : PokemonGender.FEMALE;
         }
     }
 
