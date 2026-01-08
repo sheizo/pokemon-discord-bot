@@ -43,8 +43,12 @@ namespace pokemon_discord_bot
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
 
+
             // Determine if the message is a command based on the prefix and make sure no bots trigger commands
-            if (!(message.HasCharPrefix('p', ref argPos) ||
+            bool hasPrefix = message.HasCharPrefix('p', ref argPos) ||
+                            message.HasCharPrefix('P', ref argPos);
+
+            if (!(hasPrefix ||
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;
