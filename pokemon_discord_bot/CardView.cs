@@ -5,6 +5,28 @@ namespace pokemon_discord_bot
 {
     public class CardView
     {
+        private static TextDisplayBuilder TextDisplay { get; set; } = null!;
+        private static ButtonBuilder ButtonBuilder { get; set; } = null!;
+        private static ActionRowBuilder ActionRowBuilder { get; set; } = null!;
+        private static ComponentBuilderV2 ComponentBuilderV2 { get; set; } = null!;
+
+        public static void SetTextDisplay(TextDisplayBuilder textDisplayBuilder)
+        {
+            TextDisplay = textDisplayBuilder;
+        }
+        public static void SetButtonBuilder(ButtonBuilder buttonBuilder)
+        {
+            ButtonBuilder = buttonBuilder;
+        }
+        public static void SetActionRow(ActionRowBuilder actionRowBuilder)
+        {
+            ActionRowBuilder = actionRowBuilder;
+        }
+        public static void SetComponentBuilderV2(ComponentBuilderV2 componentBuilderV2)
+        {
+            ComponentBuilderV2 = componentBuilderV2;
+        }
+
         public static MessageComponent CreateDropView(String fileName, string user, EncounterEvent encounter)
         {
             List<ButtonBuilder> buttonList = new List<ButtonBuilder>();
@@ -14,20 +36,36 @@ namespace pokemon_discord_bot
                 string label = pokemon.ApiPokemon.Name;
                 if (pokemon.IsShiny) label = "\U0001F31F" + pokemon.ApiPokemon.Name + "\U0001F31F";
 
-                buttonList.Add(new ButtonBuilder()
+                SetButtonBuilder(new ButtonBuilder()
                     .WithCustomId(pokemon.PokemonId.ToString())
                     .WithLabel(label)
                     .WithStyle(ButtonStyle.Primary));
+
+                buttonList.Add(ButtonBuilder);
+
+                //buttonList.Add(new ButtonBuilder()
+                //    .WithCustomId(pokemon.PokemonId.ToString())
+                //    .WithLabel(label)
+                //    .WithStyle(ButtonStyle.Primary));
             }
 
-            var builder = new ComponentBuilderV2()
-                .WithTextDisplay($"{user} has dropped 3 pokemons!")
+            SetTextDisplay(new TextDisplayBuilder().WithContent($"{user} found 3 pokemons!"));
+            SetActionRow(new ActionRowBuilder().WithComponents(buttonList));
+            SetComponentBuilderV2(new ComponentBuilderV2()
+                .WithTextDisplay(TextDisplay)
                 .WithMediaGallery([
                     "attachment://" + fileName
                 ])
-                .WithActionRow(buttonList)
-                .Build();
+                .WithActionRow(ActionRowBuilder));
 
+            var builder = ComponentBuilderV2.Build();
+            //var builder = new ComponentBuilderV2()
+            //    .WithTextDisplay(_textDisplay)
+            //    .WithMediaGallery([
+            //        "attachment://" + fileName
+            //    ])
+            //    .WithActionRow(buttonList)
+            //    .Build();
             return builder;
         }
 
