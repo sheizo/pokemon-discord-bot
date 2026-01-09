@@ -1,5 +1,6 @@
 ﻿using Discord;
 using pokemon_discord_bot.Data;
+using System.Text;
 
 namespace pokemon_discord_bot
 {
@@ -8,24 +9,7 @@ namespace pokemon_discord_bot
         private static TextDisplayBuilder TextDisplay { get; set; } = null!;
         private static ButtonBuilder ButtonBuilder { get; set; } = null!;
         private static ActionRowBuilder ActionRowBuilder { get; set; } = null!;
-        private static ComponentBuilderV2 ComponentBuilderV2 { get; set; } = null!;
-
-        public static void SetTextDisplay(TextDisplayBuilder textDisplayBuilder)
-        {
-            TextDisplay = textDisplayBuilder;
-        }
-        public static void SetButtonBuilder(ButtonBuilder buttonBuilder)
-        {
-            ButtonBuilder = buttonBuilder;
-        }
-        public static void SetActionRow(ActionRowBuilder actionRowBuilder)
-        {
-            ActionRowBuilder = actionRowBuilder;
-        }
-        public static void SetComponentBuilderV2(ComponentBuilderV2 componentBuilderV2)
-        {
-            ComponentBuilderV2 = componentBuilderV2;
-        }
+        private static ComponentBuilderV2 ComponentBuilder { get; set; } = null!;
 
         public static MessageComponent CreateDropView(String fileName, string user, EncounterEvent encounter)
         {
@@ -33,45 +17,33 @@ namespace pokemon_discord_bot
 
             foreach (Pokemon pokemon in encounter.Pokemons) 
             {
-                string label = pokemon.ApiPokemon.Name;
-                if (pokemon.IsShiny) label = "\U0001F31F" + pokemon.ApiPokemon.Name + "\U0001F31F";
+                string label = pokemon.FormattedName;
+                if (pokemon.IsShiny) label = "\U0001F31F" + pokemon.FormattedName + "\U0001F31F";
 
-                SetButtonBuilder(new ButtonBuilder()
-                    .WithCustomId(pokemon.PokemonId.ToString())
+                ButtonBuilder = new ButtonBuilder()
+                    .WithCustomId("drop-button" + pokemon.PokemonId.ToString())
                     .WithLabel(label)
-                    .WithStyle(ButtonStyle.Primary));
+                    .WithStyle(ButtonStyle.Primary);
 
                 buttonList.Add(ButtonBuilder);
-
-                //buttonList.Add(new ButtonBuilder()
-                //    .WithCustomId(pokemon.PokemonId.ToString())
-                //    .WithLabel(label)
-                //    .WithStyle(ButtonStyle.Primary));
             }
 
-            SetTextDisplay(new TextDisplayBuilder().WithContent($"{user} found 3 pokemons!"));
-            SetActionRow(new ActionRowBuilder().WithComponents(buttonList));
-            SetComponentBuilderV2(new ComponentBuilderV2()
+            TextDisplay = new TextDisplayBuilder().WithContent($"{user} found 3 pokemons!");
+            ActionRowBuilder = new ActionRowBuilder().WithComponents(buttonList);
+            ComponentBuilder = new ComponentBuilderV2()
                 .WithTextDisplay(TextDisplay)
                 .WithMediaGallery([
                     "attachment://" + fileName
                 ])
-                .WithActionRow(ActionRowBuilder));
+                .WithActionRow(ActionRowBuilder);
 
-            var builder = ComponentBuilderV2.Build();
-            //var builder = new ComponentBuilderV2()
-            //    .WithTextDisplay(_textDisplay)
-            //    .WithMediaGallery([
-            //        "attachment://" + fileName
-            //    ])
-            //    .WithActionRow(buttonList)
-            //    .Build();
-            return builder;
+            return ComponentBuilder.Build();
         }
 
         public static MessageComponent CreatePokemonView(String filename, Pokemon pokemon)
         {
-            string pokemonStats = 
+            string pokemonStats =
+                $"**TOTAL IV:** {pokemon.PokemonStats.TotalIvPercent}%\n" +
                 $"**HP:** {pokemon.PokemonStats.IvHp}\n" +
                 $"**ATK:** {pokemon.PokemonStats.IvAtk}\n" +
                 $"**DEF:** {pokemon.PokemonStats.IvDef}\n" +
@@ -82,7 +54,7 @@ namespace pokemon_discord_bot
 
             var builder = new ComponentBuilderV2()
                 .WithContainer(new ContainerBuilder()
-                    .WithTextDisplay($"# {pokemon.FormatPokemonName(pokemon.ApiPokemon.Name)}")
+                    .WithTextDisplay($"# {pokemon.FormattedName}")
                     .WithAccentColor(Color.DarkBlue)
                     .WithTextDisplay($"{pokemonStats}")
                     .WithMediaGallery([
@@ -91,6 +63,37 @@ namespace pokemon_discord_bot
                 .Build();    
 
             return builder;
+        }
+
+        public static MessageComponent CreateInventoryView(List<Pokemon> pokemonList, ulong userId)
+        {
+            StringBuilder list = new StringBuilder();
+
+            foreach (Pokemon pokemon in pokemonList.Take(10))
+            {
+                list.AppendLine($"`{pokemon.PokemonId}` - `{pokemon.PokemonStats.TotalIvPercent}`% - `{pokemon.FormattedName}`");
+            }
+
+            List<ButtonBuilder> buttonList = new List<ButtonBuilder>();
+            buttonList.Add(CreatePaginationButton($"pagination-button-first-page-{userId}", "\U000021A9"));
+            buttonList.Add(CreatePaginationButton($"pagination-button-previous-page-{userId}", "\U00002190"));
+            buttonList.Add(CreatePaginationButton($"pagination-button-next-page-{userId}", "\U00002192"));
+            buttonList.Add(CreatePaginationButton($"pagination-button-last-page-{userId}", "\U000021AA"));
+
+            var builder = new ComponentBuilderV2()
+                .WithTextDisplay(list.ToString())
+                .WithActionRow(buttonList)
+                .Build();
+
+            return builder;
+        }
+
+        private static ButtonBuilder CreatePaginationButton(string customId, string label)
+        {
+            return new ButtonBuilder()
+                .WithCustomId(customId)
+                .WithLabel(label)
+                .WithStyle(ButtonStyle.Primary);
         }
     }
 }

@@ -36,5 +36,9 @@ namespace pokemon_discord_bot.Data
 
         [Column("size")]
         public float Size { get; set; } = 1.0f;
+
+        public int TotalIv => (IvHp + IvAtk + IvDef + IvSpAtk + IvSpDef + IvSpeed);
+
+        public int TotalIvPercent => (TotalIv * 100) / (31 * 6);
     }
 }
