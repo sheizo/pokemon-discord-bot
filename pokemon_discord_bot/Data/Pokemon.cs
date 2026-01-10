@@ -2,6 +2,7 @@
 using PokemonBot.Data;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text;
 
 namespace pokemon_discord_bot.Data
 {
@@ -32,10 +33,10 @@ namespace pokemon_discord_bot.Data
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
         [Column("caught_by", TypeName = "bigint")]
-        public long CaughtBy { get; set; }
+        public ulong CaughtBy { get; set; }
 
         [Column("owned_by", TypeName = "bigint")]
-        public long OwnedBy { get; set; }
+        public ulong OwnedBy { get; set; }
 
         [Column("is_shiny")]
         public bool IsShiny { get; set; } = false;
@@ -57,7 +58,16 @@ namespace pokemon_discord_bot.Data
 
         //----------------------------------------------------------------------------------------------
 
+        public string IdBase36 => IdHelper.ToBase36(PokemonId);
+
         public ApiPokemon ApiPokemon => ApiPokemonData.Instance.GetPokemon(ApiPokemonId);
+        public string FormattedName {
+            get
+            {
+                if (string.IsNullOrEmpty(ApiPokemon.Name)) return "MISSING NAME";
+                return char.ToUpper(ApiPokemon.Name[0]) + ApiPokemon.Name.Substring(1);
+            }
+        }
 
         public string GetFrontSprite()
         {
@@ -74,13 +84,6 @@ namespace pokemon_discord_bot.Data
             //if not return default (male)
             if (IsShiny) return ApiPokemon.Sprites.FrontShiny;
             else return ApiPokemon.Sprites.FrontDefault;
-        }
-
-        public string FormatPokemonName(string pokemonName)
-        {
-            if (string.IsNullOrEmpty(pokemonName)) return pokemonName;
-
-            return char.ToUpper(pokemonName[0]) + pokemonName.Substring(1);
         }
     }
 }

@@ -56,13 +56,13 @@ namespace pokemon_discord_bot
                 pokemon.Gender = ApiPokemonData.GetRandomPokemonGender(pokemon);
                 pokemon.PokemonStats = new PokemonStats()
                 {
-                    IvAtk = (short)(random.NextInt64(0, 31) + 1),
-                    IvDef = (short)(random.NextInt64(0, 31) + 1),
-                    IvHp = (short)(random.NextInt64(0, 31) + 1),
-                    IvSpAtk = (short)(random.NextInt64(0, 31) + 1),
-                    IvSpDef = (short)(random.NextInt64(0, 31) + 1),
-                    IvSpeed = (short)(random.NextInt64(0, 31) + 1),
-                    Size = (float)(MIN_POKEMON_SIZE + (Math.Round(random.NextDouble(), 2) * (MAX_POKEMON_SIZE - MIN_POKEMON_SIZE)))
+                    IvAtk = (short)(random.NextInt64(0, 32)),
+                    IvDef = (short)(random.NextInt64(0, 32)),
+                    IvHp = (short)(random.NextInt64(0, 32)),
+                    IvSpAtk = (short)(random.NextInt64(0, 32)),
+                    IvSpDef = (short)(random.NextInt64(0, 32)),
+                    IvSpeed = (short)(random.NextInt64(0, 32)),
+                    Size = (float)Math.Round((MIN_POKEMON_SIZE + random.NextDouble() * (MAX_POKEMON_SIZE - MIN_POKEMON_SIZE)), 2)
                 };
 
                 pokemons.Add(pokemon);
