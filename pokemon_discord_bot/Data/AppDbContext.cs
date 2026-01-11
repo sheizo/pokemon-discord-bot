@@ -85,7 +85,6 @@ public class AppDbContext : DbContext
             .Include(p => p.PokemonStats)
             .Include(p => p.CaughtWithItem)
             .Where(p => p.OwnedBy == userId)
-            .OrderBy(p => p.PokemonId)
             .ToListAsync();
     }
 

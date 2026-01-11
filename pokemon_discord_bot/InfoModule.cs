@@ -3,17 +3,20 @@ using Discord.Commands;
 using Discord.WebSocket;
 using pokemon_discord_bot.Data;
 using pokemon_discord_bot.DiscordViews;
+using pokemon_discord_bot.Example;
 using PokemonBot.Data;
 
 namespace pokemon_discord_bot
 {
     public class InfoModule : ModuleBase<SocketCommandContext>
     {
+        private readonly InteractionService _interactionService;
         private readonly EncounterEventHandler _encounterEventHandler;
         private readonly AppDbContext _db;
 
-        public InfoModule(EncounterEventHandler encounterEventHandler, AppDbContext db)
+        public InfoModule(InteractionService interactionService, EncounterEventHandler encounterEventHandler, AppDbContext db)
         {
+            _interactionService = interactionService;
             _encounterEventHandler = encounterEventHandler;
             _db = db;
         }
@@ -41,7 +44,7 @@ namespace pokemon_discord_bot
             var bytes = await ImageEditor.CombineImagesAsync(pokemonSprites, 2.0f);
             var fileName = "coninhas.png";
             var fileAttachment = new FileAttachment(new MemoryStream(bytes), fileName);
-            var component = EncounterView.CreateEncounterView(fileName, Context.User.Mention, encounter);
+            var component = EncounterView.CreateEncounterView(fileName, user, encounter);
 
             await Context.Channel.SendFileAsync(fileAttachment, components: component);
 
@@ -64,21 +67,6 @@ namespace pokemon_discord_bot
             var embed = PokemonView.CreatePokemonView(fileName, pokemon);
 
             await Context.Channel.SendFileAsync(fileAttachment, embed: embed);
-        }
-
-        [Command("c")]
-        public async Task UserPokemonCollection()
-        {
-            var user = Context.User;
-
-            List<Pokemon> pokemonList = await _db.GetUserPokemonListAsync(user.Id);
-            if (pokemonList.Count == 0) {
-                await Context.Channel.SendMessageAsync($"{user.Mention} You have no pokemons :(");
-                return;
-            }
-
-            (var embed, var component) = CollectionView.CreateCollectionView(pokemonList, user, 0);
-            await Context.Channel.SendMessageAsync(null, embed: embed, components: component);
         }
     }
 

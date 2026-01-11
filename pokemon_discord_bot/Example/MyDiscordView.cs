@@ -7,8 +7,7 @@ namespace pokemon_discord_bot.Example
     {
         private readonly ulong _userStartedId; // Id of the user who created this view via command
 
-        public const string PREFIX = "mydiscordview_";
-        private const string INCREMENT_BUTTON_ID = PREFIX + "increment_button";
+        private const string INCREMENT_BUTTON_ID = "mydiscordview_" + "increment_button";
 
         private int _counter = 0;
 
