@@ -11,7 +11,7 @@ namespace pokemon_discord_bot.Data
         public int InventoryId { get; set; }
 
         [Column("player_id", TypeName = "bigint")]
-        public long PlayerId { get; set; }
+        public ulong PlayerId { get; set; }
 
         [Column("item_id")]
         public int ItemId { get; set; }

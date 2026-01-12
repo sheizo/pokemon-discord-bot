@@ -1,4 +1,5 @@
 ﻿using Discord.Commands;
+using pokemon_discord_bot.Services;
 
 namespace pokemon_discord_bot.Example
 {

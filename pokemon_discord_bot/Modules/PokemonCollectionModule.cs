@@ -1,7 +1,7 @@
 ﻿using Discord.Commands;
 using pokemon_discord_bot.Data;
 using pokemon_discord_bot.DiscordViews;
-using pokemon_discord_bot.Example;
+using pokemon_discord_bot.Services;
 using PokemonBot.Data;
 using System;
 using System.Collections.Generic;

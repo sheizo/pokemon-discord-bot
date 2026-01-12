@@ -4,7 +4,7 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using pokemon_discord_bot.Example;
+using pokemon_discord_bot.Services;
 using PokemonBot.Data;
 
 namespace pokemon_discord_bot
@@ -25,6 +25,7 @@ namespace pokemon_discord_bot
             services.AddSingleton<CommandHandler>();
             services.AddSingleton<EncounterEventHandler>();
             services.AddSingleton<InteractionService>();
+            services.AddSingleton<DailyRewardService>();
 
             // Build the data source once
             var connectionUrl = Environment.GetEnvironmentVariable("POKEMON_DISCORD_BOT_DB_URL");

@@ -1,5 +1,4 @@
 ﻿using pokemon_discord_bot.Data;
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

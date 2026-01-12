@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PokemonBot.Data;
 
-namespace pokemon_discord_bot
+namespace pokemon_discord_bot.Services
 {
     public class DiscordBotService
     {

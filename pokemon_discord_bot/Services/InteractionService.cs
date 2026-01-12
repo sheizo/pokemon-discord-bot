@@ -1,6 +1,7 @@
-﻿using System.Collections.Concurrent;
+﻿using pokemon_discord_bot.Example;
+using System.Collections.Concurrent;
 
-namespace pokemon_discord_bot.Example
+namespace pokemon_discord_bot.Services
 {
     public class InteractionService
     {

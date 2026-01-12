@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using pokemon_discord_bot.Data;
 
 namespace PokemonBot.Data;
@@ -10,7 +9,11 @@ public class AppDbContext : DbContext
     public DbSet<EncounterEvent> EncounterEvents => Set<EncounterEvent>();
     public DbSet<Pokemon> Pokemon => Set<Pokemon>();
     public DbSet<Item> Items => Set<Item>();
+
     public DbSet<PlayerInventory> PlayerInventory => Set<PlayerInventory>();
+    public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
+    public DbSet<DailyRewardItem> DailyRewardItems => Set<DailyRewardItem>();
+    public DbSet<DailyRewardClaim> DailyRewardClaims => Set<DailyRewardClaim>();
 
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
@@ -24,6 +27,57 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Pokemon>().HasIndex(e => e.OwnedBy).HasDatabaseName("idx_pokemon_owned_by");
         modelBuilder.Entity<PlayerInventory>().HasIndex(e => e.PlayerId).HasDatabaseName("idx_inventory_player");
 
+        SetupItems(modelBuilder);
+        SetupDailyRewards(modelBuilder);
+        
+        base.OnModelCreating(modelBuilder);
+    }
+
+    private void SetupDailyRewards(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DailyRewardClaim>()
+            .HasIndex(drc => new { drc.UserId, drc.ClaimedAtUtc })
+            .IsDescending(false, true);  // UserId ASC, ClaimedAtUtc DESC for efficient "latest" queries
+
+        modelBuilder.Entity<DailyRewardItem>()
+            .HasOne(dri => dri.DailyReward)
+            .WithMany(dr => dr.Items)
+            .HasForeignKey(dri => dri.DailyRewardId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DailyRewardItem>()
+            .HasOne(dri => dri.Item)
+            .WithMany()  
+            .HasForeignKey(dri => dri.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<DailyRewardClaim>()
+            .HasOne(drc => drc.DailyReward)
+            .WithMany() 
+            .HasForeignKey(drc => drc.DailyRewardId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DailyReward>().HasData(
+            new DailyReward
+            {
+                DailyRewardId = 1,
+                IsActive = true
+            }
+        );
+
+        modelBuilder.Entity<DailyRewardItem>().HasData(
+            new DailyRewardItem
+            {
+                DailyRewardItemId = 1,
+                DailyRewardId = 1,
+                ItemId = 1,
+                Quantity = 5
+            }
+        );
+    }
+
+    private void SetupItems(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<Item>().HasData(
             new Item
             {
@@ -66,8 +120,6 @@ public class AppDbContext : DbContext
                 Attributes = new Dictionary<string, object> { { "GuaranteedCatch", true } }
             }
         );
-        
-        base.OnModelCreating(modelBuilder);
     }
 
     public async Task<Pokemon> GetPokemonById(int pokemonId)
@@ -87,15 +139,4 @@ public class AppDbContext : DbContext
             .Where(p => p.OwnedBy == userId)
             .ToListAsync();
     }
-
-    public async Task<int> GetUserPokemonCountAsync(ulong userId)
-    {
-        return await Pokemon
-            .Include(p => p.PokemonStats)
-            .Include(p => p.CaughtWithItem)
-            .Where(p => p.OwnedBy == userId)
-            .OrderBy(p => p.PokemonId)
-            .CountAsync();
-    }
-
 }

@@ -1,10 +1,8 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.Rest;
+﻿using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using pokemon_discord_bot.Data;
-using pokemon_discord_bot.Example;
+using pokemon_discord_bot.Services;
 using PokemonBot.Data;
 using System.Reflection;
 
