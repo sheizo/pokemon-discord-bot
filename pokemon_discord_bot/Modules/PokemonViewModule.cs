@@ -43,10 +43,10 @@ namespace pokemon_discord_bot.Modules
         private async Task<FileAttachment> GetPokemonAttachment(string fileName, Pokemon pokemon)
         {
             var pokemonSize = pokemon.PokemonStats.Size;
-            List<string> pokemonSprites = new List<string>() { pokemon.GetFrontSprite() };
+            string pokemonSprite = pokemon.GetFrontSprite();
 
-            var bytes = await ImageEditor.CombineImagesAsync(pokemonSprites, pokemonSize);
-            var fileAttachment = new FileAttachment(new MemoryStream(bytes), fileName);
+            var stream = await ImageEditor.GenerateEmbedImageAsync(pokemonSprite, pokemon, pokemonScaleFactor: pokemonSize);
+            var fileAttachment = new FileAttachment(stream, fileName);
 
             return fileAttachment;
         }
