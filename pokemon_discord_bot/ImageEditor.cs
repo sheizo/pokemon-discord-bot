@@ -13,10 +13,10 @@ namespace pokemon_discord_bot
 {
     public class ImageEditor
     {
-        private const int EMBED_IMAGE_WIDTH = 500;
-        private const int EMBED_IMAGE_HEIGHT = 250;
-        private const int EMBED_IMAGE_PADDING = 10;
-        private const int EMBED_IMAGE_FONT_SIZE = 14;
+        private const int EMBED_IMAGE_WIDTH = 350;
+        private const int EMBED_IMAGE_HEIGHT = 350;
+        private const int POKEMON_FRAME_WIDTH = 300;
+        private const int POKEMON_FRAME_HEIGHT = 300;
 
         public static async Task<byte[]> CombineImagesAsync(List<string> imageUrls, float scaleFactor = 1.0f)
         {
@@ -133,33 +133,22 @@ namespace pokemon_discord_bot
             return outputStream.ToArray();
         }
 
-        public static async Task<Stream> GenerateEmbedImageAsync(string spriteUrl, Pokemon pokemon, float imageScaleFactor = 1.0f, float pokemonScaleFactor = 1.0f)
+        public static async Task<Stream> GeneratePokemonWithFrame(string spriteUrl, string? framePath, Pokemon pokemon, float pokemonScaleFactor = 1.0f)
         {
             int resizedSprite = (int)(100 * pokemonScaleFactor);
 
-            int pokemonBoxWidth = (EMBED_IMAGE_WIDTH / 2);
-            int pokemonBoxHeight = EMBED_IMAGE_HEIGHT;
-            int radius = 5;
+            // Create blank image with transparent background
+            using Image image = new Image<Rgba32>(EMBED_IMAGE_WIDTH, EMBED_IMAGE_HEIGHT, Color.Transparent);
 
-            float yPos = EMBED_IMAGE_PADDING;
+            if (!File.Exists(framePath))
+                framePath = "assets/frames/default_frame.png";
 
-            //Create font for text
-            FontFamily fontFamily = SystemFonts.Get("Cascadia Mono");
-            Font font = fontFamily.CreateFont(EMBED_IMAGE_FONT_SIZE, FontStyle.Regular);
-            Font boldFont = fontFamily.CreateFont(EMBED_IMAGE_FONT_SIZE * 1.5f, FontStyle.Bold);
-
-            // Create blank image with background color
-            using Image image = new Image<Rgba32>(EMBED_IMAGE_WIDTH, EMBED_IMAGE_HEIGHT, Color.ParseHex("#2F3136"));
-            
-            //Create Pokemon box
-            var pokemonBox = RoundedRectangle(new PointF(pokemonBoxWidth, 0), pokemonBoxWidth - 1, pokemonBoxHeight - 1, radius);
+            using Image frameImage = Image.Load(framePath);
 
             image.Mutate(img =>
             {
-                //Pokemon box Background
-                img.Fill(Color.Transparent, pokemonBox);
-                //Pokemon box "frame" 
-                img.Draw(Color.Yellow, 1f, pokemonBox);
+                //Pokemon box "frame"
+                img.DrawImage(frameImage, new Point((EMBED_IMAGE_WIDTH - POKEMON_FRAME_WIDTH) / 2, (EMBED_IMAGE_HEIGHT - POKEMON_FRAME_HEIGHT) / 2), 1f);
             });
 
             // Download, mutate and draw sprite
@@ -181,86 +170,17 @@ namespace pokemon_discord_bot
                 });
 
                 //Center sprite in pokemon box
-                int spriteX = pokemonBoxWidth + (pokemonBoxWidth - resizedSprite) / 2;
-                int spriteY = (pokemonBoxHeight - resizedSprite) / 2;
+                int spriteX = (EMBED_IMAGE_WIDTH - resizedSprite) / 2;
+                int spriteY = (EMBED_IMAGE_HEIGHT - resizedSprite) / 2;
 
                 image.Mutate(ctx => ctx.DrawImage(spriteImage, new Point(spriteX, spriteY), 1f));
             }
-
-            //Store pokemon individual IV for later when drawing stat color -> IvColorGradient(pokemonStats[i])
-            short[] pokemonStats =
-            {
-                pokemon.PokemonStats.IvHp,
-                pokemon.PokemonStats.IvAtk,
-                pokemon.PokemonStats.IvDef,
-                pokemon.PokemonStats.IvSpAtk,
-                pokemon.PokemonStats.IvSpDef,
-                pokemon.PokemonStats.IvSpeed
-            };
-
-            //Store stat + description for drawing
-            string[] statsDescription = 
-            {
-            $"{pokemonStats[0]} HP",
-            $"{pokemonStats[1]} ATK",
-            $"{pokemonStats[2]} DEF",
-            $"{pokemonStats[3]} SPATK",
-            $"{pokemonStats[4]} SPDEF",
-            $"{pokemonStats[5]} SPEED"
-            };
-
-            // Draw pokemon stats 
-            image.Mutate(ctx => ctx.DrawText("Stats:", boldFont, Color.White, new PointF(EMBED_IMAGE_PADDING + 4 * imageScaleFactor, yPos)));
-            yPos += EMBED_IMAGE_FONT_SIZE * 2.0f;
-            for (int i = 0; i < statsDescription.Length; i++)
-            {
-                image.Mutate(ctx => ctx.DrawText(statsDescription[i], font, IvColorGradient(pokemonStats[i]), new PointF(EMBED_IMAGE_PADDING + 4 * imageScaleFactor, yPos)));
-                if (i + 1 < statsDescription.Length) yPos += EMBED_IMAGE_FONT_SIZE * 1.2f;
-                else yPos += EMBED_IMAGE_FONT_SIZE * 2.5f;
-            }
-
-            image.Mutate(ctx => ctx.DrawText($"SIZE: {pokemon.PokemonStats.Size}", font, Color.Yellow, new PointF(EMBED_IMAGE_PADDING + 4 * imageScaleFactor, yPos)));
-            yPos += EMBED_IMAGE_FONT_SIZE * 1.2f;
-
+            
             // Save to stream (PNG format)
             var stream = new MemoryStream();
             await image.SaveAsPngAsync(stream);
             stream.Position = 0;
             return stream;
-        }
-
-        private static Color IvColorGradient(short ivValue)
-        {
-            int minIv = 0;
-            int maxIv = 31;
-
-            ivValue = (short) Math.Clamp(ivValue, minIv, maxIv);
-
-            float normalizedIv = (float) ivValue / maxIv;
-
-            byte r = (byte)(255 * (1 - normalizedIv));
-            byte g = (byte)(255 * normalizedIv);
-            byte b = 0;
-
-            return Color.FromRgb(r, g, b);
-        }
-
-        private static IPath RoundedRectangle(PointF origin, int width, int height, int r)
-        {
-            IPath roundedRectangle = new PathBuilder()
-            .SetOrigin(origin)// optional
-            .AddLine(r, 0, width - r, 0) // Top line
-            .AddArc(width - r, r, r, r, 0, 270, 90) //Top Right arc
-            .AddLine(width, r, width, height - r) // Right Line
-            .AddArc(width - r, height - r, r, r, 0, 0, 90) // Bottom right arc
-            .AddLine(width - r, height, r, height) // Bot line
-            .AddArc(r, height - r, r, r, 0, 90, 90) //Bot left
-            .AddLine(0, height - r, 0, r) // Left line
-            .AddArc(r, r, r, r, 0, 180, 90) //Bot right
-            .CloseFigure()
-            .Build();
-
-            return roundedRectangle;
         }
     }
 }
