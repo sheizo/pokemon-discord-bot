@@ -14,32 +14,32 @@ namespace pokemon_discord_bot.Services
             _claimCache = new ConcurrentDictionary<ulong, DailyRewardClaim>();
         }
 
-        public async Task<bool> CanClaimReward(ulong userId, AppDbContext db)
-        {
-            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+        //public async Task<bool> CanClaimReward(ulong userId, AppDbContext db)
+        //{
+        //    DateOnly today = DateOnly.FromDateTime(DateTime.Today);
 
-            //Check cache first
-            DailyRewardClaim? rewardClaim;
-            if (_claimCache.ContainsKey(userId))
-            {
-                rewardClaim = _claimCache[userId];
-                return rewardClaim.ClaimDate < today;
-            }
+        //    //Check cache first
+        //    DailyRewardClaim? rewardClaim;
+        //    if (_claimCache.ContainsKey(userId))
+        //    {
+        //        rewardClaim = _claimCache[userId];
+        //        return rewardClaim.ClaimDate < today;
+        //    }
 
-             rewardClaim = await db.DailyRewardClaims.Where(c => c.UserId == userId)
-                .OrderByDescending(c => c.ClaimedAtUtc)
-                .FirstOrDefaultAsync();
+        //     rewardClaim = await db.DailyRewardClaims.Where(c => c.UserId == userId)
+        //        .OrderByDescending(c => c.ClaimedAtUtc)
+        //        .FirstOrDefaultAsync();
 
-            if (rewardClaim == null) return true;
+        //    if (rewardClaim == null) return true;
 
-            _claimCache[userId] = rewardClaim;
-            return rewardClaim.ClaimDate < today;
-        }
+        //    _claimCache[userId] = rewardClaim;
+        //    return rewardClaim.ClaimDate < today;
+        //}
 
         public async Task ClaimDailyReward(ulong userId, AppDbContext db)
         {
-            if (!await CanClaimReward(userId, db))
-                throw new InvalidOperationException("Trying to Claim reward when it is on cooldown. Always call DailyRewardService.CanClaimReward first");
+            //if (!await CanClaimReward(userId, db))
+            //    throw new InvalidOperationException("Trying to Claim reward when it is on cooldown. Always call DailyRewardService.CanClaimReward first");
             
             //Get the current activate daily reward
             var dailyReward = await db.DailyRewards
@@ -79,6 +79,7 @@ namespace pokemon_discord_bot.Services
                     {
                         PlayerId = userId,
                         ItemId = rewardItem.ItemId,
+                        Item = rewardItem.Item,
                         Quantity = rewardItem.Quantity
                     };
                     await db.PlayerInventory.AddAsync(playerInventory);

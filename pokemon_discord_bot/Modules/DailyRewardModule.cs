@@ -24,14 +24,14 @@ namespace pokemon_discord_bot.Modules
         public async Task DailyAsync()
         {
             // Check if the user has already claimed their daily reward
-            var canClaim = await _dailyRewardService.CanClaimReward(Context.User.Id, _dbContext);
+            var canClaim = true; //await _dailyRewardService.CanClaimReward(Context.User.Id, _dbContext);
 
             if (canClaim)
             {
                 try
                 {
                     await _dailyRewardService.ClaimDailyReward(Context.User.Id, _dbContext);
-                    await ReplyAsync($"{Context.User.Mention} Claimed his reward!.");
+                    await ReplyAsync($"{Context.User.Mention} Claimed his reward!");
                 } 
                 catch (Exception ex) {
 
