@@ -1,8 +1,9 @@
 ﻿using Discord;
 using Discord.Commands;
 using pokemon_discord_bot.DiscordViews;
+using pokemon_discord_bot.Helpers;
 using pokemon_discord_bot.Services;
-using PokemonBot.Data;
+using pokemon_discord_bot.Data;
 
 namespace pokemon_discord_bot.Modules
 {
@@ -11,11 +12,11 @@ namespace pokemon_discord_bot.Modules
     public class PokemonEncounterModule : ModuleBase<SocketCommandContext>
     {
         private readonly InteractionService _interactionService;
-        private readonly EncounterEventHandler _encounterEventHandler;
+        private readonly EncounterEventService _encounterEventHandler;
         private readonly AppDbContext _db;
-        private readonly PokemonHandler _pokemonHandler;
+        private readonly PokemonService _pokemonHandler;
 
-        public PokemonEncounterModule(InteractionService interactionService, EncounterEventHandler encounterEventHandler, AppDbContext db, PokemonHandler pokemonHandler)
+        public PokemonEncounterModule(InteractionService interactionService, EncounterEventService encounterEventHandler, AppDbContext db, PokemonService pokemonHandler)
         {
             _interactionService = interactionService;
             _encounterEventHandler = encounterEventHandler;
@@ -52,16 +53,21 @@ namespace pokemon_discord_bot.Modules
             var message = await Context.Channel.SendFileAsync(fileAttachment, components: component);
             encounterView.SetMessage(message);
 
-            _interactionService.RegisterView(message.Id, encounterView);
+            _interactionService.RegisterView(
+                message.Id,
+                encounterView, 
+                new InactivityTimer(TimeSpan.FromMinutes(3),
+                    async () =>
+                    {
+                        await message.ModifyAsync(msg =>
+                        {
+                            msg.Components = encounterView.GetExpiredContent();
+                        });
+                        _interactionService.UnregisterView(message.Id);
+                    }
+                )
+            );
 
-            DiscordViewHelper.StartInactivityTimer(async () =>
-            {
-                await message.ModifyAsync(msg =>
-                {
-                    msg.Components = encounterView.GetExpiredContent();
-                });
-                _interactionService.UnregisterView(message.Id);
-            });
         }
     }
 }

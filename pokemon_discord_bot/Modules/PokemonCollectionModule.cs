@@ -2,7 +2,6 @@
 using pokemon_discord_bot.Data;
 using pokemon_discord_bot.DiscordViews;
 using pokemon_discord_bot.Services;
-using PokemonBot.Data;
 
 namespace pokemon_discord_bot.Modules
 {
@@ -69,11 +68,18 @@ namespace pokemon_discord_bot.Modules
             var component = collectionView.GetComponent();
             var message = await Context.Channel.SendMessageAsync(null, embed: embed, components: component);
 
-            _interactionService.RegisterView(message.Id, collectionView);
+            _interactionService.RegisterView(
+                message.Id,
+                collectionView,
+                new InactivityTimer(TimeSpan.FromMinutes(3),
+                    () =>
+                    {
+                        _interactionService.UnregisterView(message.Id);
+                        return Task.CompletedTask;
+                    }
+                )
+            );
 
-            await Task.Delay(TimeSpan.FromMinutes(3));
-
-            _interactionService.UnregisterView(message.Id);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Discord.Commands;
+using pokemon_discord_bot.DiscordViews;
 using pokemon_discord_bot.Services;
 
 namespace pokemon_discord_bot.Example
@@ -19,17 +20,22 @@ namespace pokemon_discord_bot.Example
             var embed = view.GetEmbed();
             var component = view.GetComponent();
             var message = await Context.Channel.SendMessageAsync(embed: embed, components: component);
-            _interactionService.RegisterView(message.Id, view);
 
-            await Task.Delay(TimeSpan.FromMinutes(1));
-
-            await message.ModifyAsync(msg =>
-            {
-                msg.Components = null;
-                msg.Content = "This counter has expired.";
-            });
-
-            _interactionService.UnregisterView(message.Id);
+            _interactionService.RegisterView(
+                message.Id,
+                view,
+                new InactivityTimer(TimeSpan.FromMinutes(1),
+                    async () =>
+                    {
+                        await message.ModifyAsync(msg =>
+                        {
+                            msg.Components = null;
+                            msg.Content = "This counter has expired.";
+                        });
+                        _interactionService.UnregisterView(message.Id);
+                    }
+                )
+            );
         }
     }
 }
