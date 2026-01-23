@@ -1,20 +1,17 @@
-﻿
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using pokemon_discord_bot.Data;
 using pokemon_discord_bot.DiscordViews;
 using pokemon_discord_bot.Services;
-using PokemonBot.Data;
 
 namespace pokemon_discord_bot.Modules
 {
     public class PokemonViewModule : ModuleBase<SocketCommandContext>
     {
         private readonly AppDbContext _db;
-        private readonly PokemonHandler _pokemonViewHandler;
+        private readonly PokemonService _pokemonViewHandler;
 
-        public PokemonViewModule(AppDbContext db, PokemonHandler pokemonViewHandler)
+        public PokemonViewModule(AppDbContext db, PokemonService pokemonViewHandler)
         {
             _db = db;
             _pokemonViewHandler = pokemonViewHandler;

@@ -1,9 +1,9 @@
 ﻿using pokemon_discord_bot.Data;
-using PokemonBot.Data;
+using System.Collections.Concurrent;
 
 namespace pokemon_discord_bot.Services
 {
-    public class EncounterEventHandler
+    public class EncounterEventService
     {
         private const uint DROP_COOLDOWN_SECONDS = 5;
         private const uint CLAIM_COOLDOWN_SECONDS = 5;
@@ -12,12 +12,12 @@ namespace pokemon_discord_bot.Services
         private const float MIN_POKEMON_SIZE = 1.0f;
         private const float MAX_POKEMON_SIZE = 3.0f;
 
-        private Dictionary<ulong, DateTimeOffset> _lastTriggerTime;
-        private Dictionary<ulong, DateTimeOffset> _lastClaimTime;
+        private ConcurrentDictionary<ulong, DateTimeOffset> _lastTriggerTime;
+        private ConcurrentDictionary<ulong, DateTimeOffset> _lastClaimTime;
 
-        public EncounterEventHandler() {
-            _lastTriggerTime = new Dictionary<ulong, DateTimeOffset>();
-            _lastClaimTime = new Dictionary<ulong, DateTimeOffset>();
+        public EncounterEventService() {
+            _lastTriggerTime = new ConcurrentDictionary<ulong, DateTimeOffset>();
+            _lastClaimTime = new ConcurrentDictionary<ulong, DateTimeOffset>();
         }
 
         public async Task<EncounterEvent> CreateRandomEncounterEvent(int pokemonAmount, ulong userId, AppDbContext db)

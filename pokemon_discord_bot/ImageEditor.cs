@@ -1,10 +1,7 @@
 ﻿#pragma warning disable CA1416 // Suppress platform compatibility warning
 
 using pokemon_discord_bot.Data;
-using SixLabors.Fonts;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing;
-using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;

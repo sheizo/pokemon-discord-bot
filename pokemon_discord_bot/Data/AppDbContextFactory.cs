@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Npgsql;
-using PokemonBot.Data;
+using pokemon_discord_bot.Data;
 
 namespace pokemon_discord_bot.Data
 {

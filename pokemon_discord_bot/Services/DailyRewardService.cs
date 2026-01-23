@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using pokemon_discord_bot.Data;
-using PokemonBot.Data;
+using pokemon_discord_bot.Data;
 using System.Collections.Concurrent;
 
 namespace pokemon_discord_bot.Services

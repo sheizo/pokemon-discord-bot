@@ -3,7 +3,8 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PokemonBot.Data;
+using pokemon_discord_bot.Data;
+using pokemon_discord_bot.Handlers;
 
 namespace pokemon_discord_bot.Services
 {

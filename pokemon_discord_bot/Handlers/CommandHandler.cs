@@ -3,10 +3,9 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using pokemon_discord_bot.Data;
 using pokemon_discord_bot.Services;
-using PokemonBot.Data;
 using System.Reflection;
 
-namespace pokemon_discord_bot
+namespace pokemon_discord_bot.Handlers
 {
     public class CommandHandler
     {

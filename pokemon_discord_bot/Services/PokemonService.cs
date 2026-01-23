@@ -1,15 +1,16 @@
 ﻿using pokemon_discord_bot.Data;
-using PokemonBot.Data;
+using pokemon_discord_bot.Helpers;
+using System.Collections.Concurrent;
 
 namespace pokemon_discord_bot.Services
 {
-    public class PokemonHandler
+    public class PokemonService
     {
-        private Dictionary<ulong, Pokemon> _lastPokemonOwned;
+        private ConcurrentDictionary<ulong, Pokemon> _lastPokemonOwned;
 
-        public PokemonHandler() 
+        public PokemonService() 
         {
-            _lastPokemonOwned = new Dictionary<ulong, Pokemon>();
+            _lastPokemonOwned = new ConcurrentDictionary<ulong, Pokemon>();
         }
 
         public async Task<Pokemon> GetPokemonAsync(ulong userId, string? pokemonId, AppDbContext db)

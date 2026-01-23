@@ -1,12 +1,5 @@
-﻿using Discord;
-using Discord.Commands;
-using pokemon_discord_bot.Data;
+﻿using Discord.Commands;
 using pokemon_discord_bot.DiscordViews;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace pokemon_discord_bot.Modules
 {

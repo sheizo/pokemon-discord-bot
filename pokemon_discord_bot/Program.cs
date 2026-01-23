@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using pokemon_discord_bot.Services;
-using PokemonBot.Data;
+using pokemon_discord_bot.Data;
+using pokemon_discord_bot.Handlers;
 
 namespace pokemon_discord_bot
 {
@@ -23,10 +24,10 @@ namespace pokemon_discord_bot
             services.AddSingleton<DiscordSocketClient>();
             services.AddSingleton<CommandService>();
             services.AddSingleton<CommandHandler>();
-            services.AddSingleton<EncounterEventHandler>();
+            services.AddSingleton<EncounterEventService>();
             services.AddSingleton<InteractionService>();
             services.AddSingleton<DailyRewardService>();
-            services.AddSingleton<PokemonHandler>();
+            services.AddSingleton<PokemonService>();
 
             // Build the data source once
             var connectionUrl = Environment.GetEnvironmentVariable("POKEMON_DISCORD_BOT_DB_URL");

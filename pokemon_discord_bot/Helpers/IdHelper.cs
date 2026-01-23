@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace pokemon_discord_bot
+namespace pokemon_discord_bot.Helpers
 {
     public static class IdHelper
     {

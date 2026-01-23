@@ -1,8 +1,7 @@
-﻿using pokemon_discord_bot.Data;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace pokemon_discord_bot
+namespace pokemon_discord_bot.Data
 {
     internal class ApiPokemonData
     {

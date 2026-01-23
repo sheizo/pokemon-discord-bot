@@ -1,10 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using pokemon_discord_bot.Data;
-using System.ComponentModel;
-using System.Text.RegularExpressions;
 
-namespace PokemonBot.Data;
-
+namespace pokemon_discord_bot.Data;
 public class AppDbContext : DbContext
 {
     public DbSet<PokemonStats> PokemonStats => Set<PokemonStats>();

@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using pokemon_discord_bot.Data;
 using pokemon_discord_bot.Example;
+using pokemon_discord_bot.Helpers;
 using System.Text;
 
 namespace pokemon_discord_bot.DiscordViews
