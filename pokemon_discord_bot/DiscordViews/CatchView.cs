@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using pokemon_discord_bot.Data;
 using pokemon_discord_bot.Example;
+using pokemon_discord_bot.Helpers;
 using pokemon_discord_bot.Services;
-using PokemonBot.Data;
+using pokemon_discord_bot.Data;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -36,10 +37,14 @@ namespace pokemon_discord_bot.DiscordViews
             var pokemonView = await ImageEditor.GeneratePokemonWithFrame(_pokemon.GetFrontSprite(), null, _pokemon, 1.0f);
             var fileAttachment = new FileAttachment(pokemonView, fileName);
 
+            var sortedPokeballs = userPokeballs.OrderBy(p => p.ItemId).ToList();
+
             var buttonList = new List<ButtonBuilder>(new ButtonBuilder[userPokeballs.Count]);
 
-            foreach (PlayerInventory pokeball in userPokeballs)
+            for (int i = 0; i < sortedPokeballs.Count; i++)
             {
+                var pokeball = sortedPokeballs[i];
+
                 string emoteString = DiscordViewHelper.PokeballEmotes.GetValueOrDefault(pokeball.Item.Name, "");
 
                 Emote? emote = null;
@@ -48,10 +53,12 @@ namespace pokemon_discord_bot.DiscordViews
 
                 bool disabled = pokeball.Quantity <= 0;
 
-                //create buttons with pokeballs in order
-                buttonList[pokeball.ItemId - 1] = DiscordViewHelper.CreateViewButton($"{pokeball.Item.Name}catch-{_pokemon.PokemonId}",
+                buttonList[i] = DiscordViewHelper.CreateViewButton(
+                    $"{pokeball.Item.Name}catch-{_pokemon.PokemonId}",
                     $" {pokeball.Quantity}",
-                    disabled ? ButtonStyle.Danger : ButtonStyle.Primary, disabled, emote);
+                    disabled ? ButtonStyle.Danger : ButtonStyle.Primary,
+                    disabled,
+                    emote);
             }
 
             var builder = new ComponentBuilderV2()
@@ -84,7 +91,7 @@ namespace pokemon_discord_bot.DiscordViews
             else
                 catchRate = pokeballCatchRateMultiplier * CATCH_PROBABILITY_NORMAL;
 
-            return random.NextDouble() < catchRate;
+            return random.NextDouble() < 100;
         }
 
         public async Task HandleInteraction(SocketMessageComponent component, IServiceProvider serviceProvider)
@@ -104,7 +111,13 @@ namespace pokemon_discord_bot.DiscordViews
             string pokeballName = component.Data.CustomId.Substring(0, position);
 
             var userPokeball = allUserPokeballs.FirstOrDefault(ui => ui.Item.Name == pokeballName);
-            userPokeball.Quantity -= 1;
+            userPokeball.Quantity -= 10;
+
+            if (userPokeball.Quantity <= 0)
+            {
+                db.Remove(userPokeball);
+            }
+
             await db.SaveChangesAsync();
 
             Item pokeball = userPokeball.Item;
