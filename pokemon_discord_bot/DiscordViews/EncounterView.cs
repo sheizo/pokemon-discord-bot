@@ -4,27 +4,28 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using pokemon_discord_bot.Data;
 using pokemon_discord_bot.Example;
+using pokemon_discord_bot.Helpers;
 using pokemon_discord_bot.Services;
-using PokemonBot.Data;
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
 namespace pokemon_discord_bot.DiscordViews
 {
     public class EncounterView : IViewInteractable
     {
-        private readonly EncounterEventHandler _encounterEventHandler;
+        private readonly EncounterEventService _encounterEventHandler;
         private readonly EncounterEvent _encounter;
         private readonly SocketUser _user;
-        private readonly PokemonHandler _pokemonHandler;
+        private readonly PokemonService _pokemonHandler;
         private readonly InteractionService _interactionService;
 
-        private Dictionary<ulong, int> _usersCatchingPokemons;
+        private ConcurrentDictionary<ulong, int> _usersCatchingPokemons;
         private List<int> _caughtPokemonsId;
+        private List<int> _fledPokemonsId;
         private IUserMessage _message;
         private string _fileName;
-        private bool _isUserCatchingPokemon = false;
 
-        public EncounterView(EncounterEventHandler encounterEventHandler, EncounterEvent encounter, SocketUser user, PokemonHandler pokemonHandler, InteractionService interactionService, string fileName)
+        public EncounterView(EncounterEventService encounterEventHandler, EncounterEvent encounter, SocketUser user, PokemonService pokemonHandler, InteractionService interactionService, string fileName)
         {
             _encounterEventHandler = encounterEventHandler;
             _encounter = encounter;
@@ -34,7 +35,8 @@ namespace pokemon_discord_bot.DiscordViews
             _fileName = fileName;
 
             _caughtPokemonsId = new List<int>();
-            _usersCatchingPokemons = new Dictionary<ulong, int>();
+            _fledPokemonsId = new List<int>();
+            _usersCatchingPokemons = new ConcurrentDictionary<ulong, int>();
         }
 
         public MessageComponent GetComponent()
@@ -54,12 +56,18 @@ namespace pokemon_discord_bot.DiscordViews
 
                 if (_caughtPokemonsId.Contains(pokemon.PokemonId))                 
                 {
-                    buttonList.Add(DiscordViewHelper.CreateViewButton($"drop-button{IdHelper.ToBase36(pokemon.PokemonId)}", $"{label} - (Caught)", ButtonStyle.Success, true));
+                    buttonList.Add(DiscordViewHelper.CreateViewButton($"drop-button{IdHelper.ToBase36(pokemon.PokemonId)}", $"{label} (Caught)", ButtonStyle.Success, true));
+                    continue;
+                }
+                
+                if (_fledPokemonsId.Contains(pokemon.PokemonId))
+                {
+                    buttonList.Add(DiscordViewHelper.CreateViewButton($"drop-button{IdHelper.ToBase36(pokemon.PokemonId)}", $"{label} (Fled)", ButtonStyle.Secondary, true));
                     continue;
                 }
 
                 if (IsUserCatchingPokemon(pokemon.PokemonId))
-                    buttonList.Add(DiscordViewHelper.CreateViewButton($"drop-button{IdHelper.ToBase36(pokemon.PokemonId)}", $"(Catching) - {label}", ButtonStyle.Danger, true));
+                    buttonList.Add(DiscordViewHelper.CreateViewButton($"drop-button{IdHelper.ToBase36(pokemon.PokemonId)}", $"(Catching) {label}", ButtonStyle.Danger, true));
                 else 
                     buttonList.Add(DiscordViewHelper.CreateViewButton($"drop-button{IdHelper.ToBase36(pokemon.PokemonId)}", label));
             }
@@ -89,10 +97,16 @@ namespace pokemon_discord_bot.DiscordViews
                 _caughtPokemonsId.Add(pokemon.PokemonId);
         }
 
+        public void AddFledPokemon(Pokemon pokemon)
+        {
+            if (!_fledPokemonsId.Contains(pokemon.PokemonId))
+                _fledPokemonsId.Add(pokemon.PokemonId);
+        }
+
         public void RemoveCatchingUser(ulong userId)
         {
             if (_usersCatchingPokemons.ContainsKey(userId))
-                _usersCatchingPokemons.Remove(userId);
+                _usersCatchingPokemons.Remove(userId, out int value);
         }
 
         public async Task UpdateMessageAsync()
@@ -108,14 +122,15 @@ namespace pokemon_discord_bot.DiscordViews
             _message = message;
         }
 
-        public void SetUserCatchingPokemon(bool isUserCatchingPokemon)
-        {
-            _isUserCatchingPokemon = isUserCatchingPokemon;
-        }
-
         public bool IsUserCatchingPokemon(int pokemonId)
         {
-            return _usersCatchingPokemons.ContainsValue(pokemonId);
+            foreach (var value in _usersCatchingPokemons.Values)
+            {
+                if (value == pokemonId)
+                    return true;
+            }
+
+            return false;
         }
         public MessageComponent GetExpiredContent()
         {
@@ -131,7 +146,9 @@ namespace pokemon_discord_bot.DiscordViews
         {
             await component.DeferAsync(ephemeral: true);
 
-            DiscordViewHelper.ResetInactivityTimer();
+            var messageId = component.Message.Id;
+            var timer = _interactionService.TryGetViewTimer(messageId);
+            timer.Reset();
 
             var db = serviceProvider.GetRequiredService<AppDbContext>();
 
@@ -141,7 +158,7 @@ namespace pokemon_discord_bot.DiscordViews
                 return;
             }
 
-            if (_isUserCatchingPokemon)
+            if (_usersCatchingPokemons.ContainsKey(component.User.Id))
             {
                 await component.FollowupAsync("You're already catching a pokemon in this encounter!", ephemeral: true);
                 return;
@@ -149,6 +166,10 @@ namespace pokemon_discord_bot.DiscordViews
 
             string pokemonId = component.Data.CustomId.Substring("drop-button".Length);
             Pokemon pokemon = await _pokemonHandler.GetPokemonAsync(component.User.Id, pokemonId, db);
+
+            var allPokeballs = await db.Items
+                .Where(i => Regex.IsMatch(i.Name, "Ball"))
+                .ToListAsync();
 
             var allUserPokeballs = await db.PlayerInventory
                 .Include(ui => ui.Item)
@@ -161,20 +182,28 @@ namespace pokemon_discord_bot.DiscordViews
                 return; 
             }
 
-            // Mark user who interacted as catching this pokemon
+            //Cache user catching pokemon
             _usersCatchingPokemons[component.User.Id] = pokemon.PokemonId;
-            _isUserCatchingPokemon = true;
 
             await component.ModifyOriginalResponseAsync(msg => msg.Components = GetComponent());
 
             CatchView catchView = new CatchView(pokemon, component.User, _pokemonHandler, this);
-            var catchViewComponent = await catchView.GetComponent(allUserPokeballs);
+            var catchViewComponent = await catchView.GetComponent(allUserPokeballs, allPokeballs);
 
-            var message = await component.FollowupWithFileAsync(components: catchViewComponent.components, attachment: catchViewComponent.attachment, ephemeral: true);
+            var message = await component.FollowupWithFileAsync(components: catchViewComponent.components, attachment: catchViewComponent.attachment);
 
-            _interactionService.RegisterView(message.Id, catchView);
-
-            DiscordViewHelper.StartInactivityTimer(() => _interactionService.UnregisterView(message.Id));
+            _interactionService.RegisterView(
+                message.Id,
+                catchView,
+                new InactivityTimer(
+                    TimeSpan.FromMinutes(5),
+                    () =>
+                    {
+                       _interactionService.UnregisterView(message.Id);
+                        return Task.CompletedTask;
+                    }
+                )
+            );
 
         }
     }
