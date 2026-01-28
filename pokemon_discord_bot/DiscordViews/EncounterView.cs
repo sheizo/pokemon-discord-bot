@@ -22,8 +22,9 @@ namespace pokemon_discord_bot.DiscordViews
         private readonly ItemService _itemService;
 
         private ConcurrentDictionary<ulong, int> _usersCatchingPokemons;
-        private List<int> _caughtPokemonsId;
-        private List<int> _fledPokemonsId;
+        private ConcurrentDictionary<int, int> _pokemonCatchTries;
+        private HashSet<int> _caughtPokemonsId;
+        private HashSet<int> _fledPokemonsId;
         private IUserMessage _message;
         private string _fileName;
 
@@ -44,9 +45,10 @@ namespace pokemon_discord_bot.DiscordViews
             _itemService = itemService;
             _fileName = fileName;
 
-            _caughtPokemonsId = new List<int>();
-            _fledPokemonsId = new List<int>();
+            _caughtPokemonsId = new HashSet<int>();
+            _fledPokemonsId = new HashSet<int>();
             _usersCatchingPokemons = new ConcurrentDictionary<ulong, int>();
+            _pokemonCatchTries = new ConcurrentDictionary<int, int>();
         }
 
         public MessageComponent GetComponent()
@@ -103,14 +105,12 @@ namespace pokemon_discord_bot.DiscordViews
 
         public void AddCaughtPokemon(Pokemon pokemon)
         {
-            if (!_caughtPokemonsId.Contains(pokemon.PokemonId)) 
-                _caughtPokemonsId.Add(pokemon.PokemonId);
+            _caughtPokemonsId.Add(pokemon.PokemonId);
         }
 
         public void AddFledPokemon(Pokemon pokemon)
         {
-            if (!_fledPokemonsId.Contains(pokemon.PokemonId))
-                _fledPokemonsId.Add(pokemon.PokemonId);
+            _fledPokemonsId.Add(pokemon.PokemonId);
         }
 
         public void RemoveUserCatchingPokemon(ulong userId)
@@ -121,6 +121,17 @@ namespace pokemon_discord_bot.DiscordViews
         public bool IsPokemonBeingCaught(int pokemonId)
         {
             return _usersCatchingPokemons.Values.Contains(pokemonId);
+        }
+
+        public void AddPokemonCatchAttempt(int pokemonId)
+        {
+            _pokemonCatchTries.AddOrUpdate(pokemonId, 1, (key, oldValue) => oldValue + 1);
+        }
+
+        public int GetPokemonCatchAttempts(int pokemonId)
+        {
+            _pokemonCatchTries.TryGetValue(pokemonId, out int tries);
+            return tries;
         }
 
         public async Task UpdateMessageAsync()

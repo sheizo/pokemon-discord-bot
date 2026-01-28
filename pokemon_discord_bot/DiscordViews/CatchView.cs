@@ -28,7 +28,6 @@ namespace pokemon_discord_bot.DiscordViews
         private float _fleeProbabilityLegendary = 0.10f;
         private float _fleeProbabilityMythical = 0.08f;
         private float _fleeRate = 1.15f;
-        private float _catchTries = 0;
         private bool _isPokemonLegendary;
         private bool _isPokemonMythical;
 
@@ -76,6 +75,8 @@ namespace pokemon_discord_bot.DiscordViews
                     emote: emote);
             }
 
+            buttonList.Add(DiscordViewHelper.CreateViewButton($"back-button", "Back", ButtonStyle.Danger));
+
             var builder = new ComponentBuilderV2()
             .WithTextDisplay($"{_user.Mention} is attempting to catch {_pokemon.FormattedName}\n" +
                 $"Choose a Pokeball to catch it with:")
@@ -106,21 +107,21 @@ namespace pokemon_discord_bot.DiscordViews
             else
                 catchRate = pokeballCatchRateMultiplier * CATCH_PROBABILITY_NORMAL;
 
-            return random.NextDouble() < catchRate;
+            return random.NextDouble() < 0;
         }
 
         private bool PokemonFled()
         {
             var random = Random.Shared.NextDouble();
+            var catchAttempts = _encounterView.GetPokemonCatchAttempts(_pokemon.PokemonId);
+            var fleeMultiplier = MathF.Pow(_fleeRate, catchAttempts);
 
             if (_isPokemonMythical)
-                _fleeProbability = MathF.Pow(_fleeRate, _catchTries) * _fleeProbabilityMythical;
+                _fleeProbability = fleeMultiplier * _fleeProbabilityMythical;
             else if (_isPokemonLegendary)
-                _fleeProbability = MathF.Pow(_fleeRate, _catchTries) * _fleeProbabilityLegendary;
+                _fleeProbability = fleeMultiplier * _fleeProbabilityLegendary;
             else
-                _fleeProbability = MathF.Pow(_fleeRate, _catchTries) * _fleeProbabilityNormal;
-
-            _catchTries++;
+                _fleeProbability = fleeMultiplier * _fleeProbabilityNormal;
 
             return random < _fleeProbability;
         }
@@ -129,13 +130,23 @@ namespace pokemon_discord_bot.DiscordViews
         {
             await component.DeferAsync(ephemeral: true);
 
+            if (component.Data.CustomId.Equals("back-button"))
+            {
+                _encounterView.RemoveUserCatchingPokemon(component.User.Id);
+
+                await _encounterView.UpdateMessageAsync();
+                await component.DeleteOriginalResponseAsync();
+
+                return;
+            }
+
             var db = serviceProvider.GetRequiredService<AppDbContext>();
             var cache = serviceProvider.GetRequiredService<IMemoryCache>();
             var allPokeballsSorted = await _itemService.GetAllPokeballsSortedCache(db, cache);
 
             var currentUserPokeballs = await db.PlayerInventory
                 .Include(ui => ui.Item)
-                .Where(ui => ui.PlayerId == component.User.Id && EF.Functions.ILike(ui.Item.Name, "Ball"))
+                .Where(ui => ui.PlayerId == component.User.Id && EF.Functions.ILike(ui.Item.Name, "%Ball%"))
                 .ToListAsync();
 
             int position = component.Data.CustomId.IndexOf("catch-");
@@ -198,6 +209,8 @@ namespace pokemon_discord_bot.DiscordViews
 
                     return;
                 }
+
+                _encounterView.AddPokemonCatchAttempt(_pokemon.PokemonId);
 
                 var updatedComponents = await GetComponent(currentUserPokeballs, allPokeballsSorted);
 
